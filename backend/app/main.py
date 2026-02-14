@@ -13,7 +13,7 @@ All ML and service logic is in backend/app/services/ml/ and backend/app/api/
 
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
-from pathlib import Path
+from pathlib import Path as FilePath
 from typing import List, Optional, Dict, Any
 import asyncio
 import hashlib
@@ -82,7 +82,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURATION
 # ============================================================================
 
-AUTH_FILE = Path(__file__).parent / "users.json"
+AUTH_FILE = FilePath(__file__).parent / "users.json"
 AUTH_FILE.touch(exist_ok=True)
 
 PREDICTION_CACHE = {}
