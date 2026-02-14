@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+pandas
+numpy
+statsmodels
+yfinance
+pydantic
+supabase
+python-dotenv
+email-validator
+scikit-learn==1.6.1
+joblib
+flask
+flask-cors
+tensorflow
+lightgbm
