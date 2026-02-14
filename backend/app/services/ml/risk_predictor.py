@@ -25,6 +25,12 @@ def predict_risk(symbol: str) -> dict:
         "label": "HIGH",
         "volatility": 0.031
     }
+from app.services.ml.risk_predictor import RiskPredictor
+
+@router.post("/predict-risk")
+def predict_risk(payload: RiskInput):
+    predictor = RiskPredictor()
+    return predictor.predict(payload)
 
 @router.post("/predict-ai")
 def predict_ai(payload: dict):
@@ -35,7 +41,6 @@ def predict_ai(payload: dict):
 
     # 2️⃣ Run trained ML models
     price_result = predict_price(symbol)
-    risk_predictor = RiskPredictor()
     risk_result = risk_predictor.predict_risk(symbol)
 
     # 3️⃣ Run advisor (uses ML outputs)
@@ -67,12 +72,20 @@ class RiskPredictor:
         "trend_strength",
         "volume_spike"
     ]
-
     def __init__(self):
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError(f"Risk model not found at {MODEL_PATH}")
+        self.model = None
 
-        self.model = joblib.load(MODEL_PATH)
+    def load_model(self):
+        if self.model is None:
+            if not os.path.exists(MODEL_PATH):
+                raise RuntimeError(
+                    "Risk model not available. Train or provide model."
+                )
+            self.model = joblib.load(MODEL_PATH)
+
+    def predict(self, data):
+        self.load_model()
+        return self.model.predict(data)
 
     # -----------------------------
     # Feature validation
