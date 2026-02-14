@@ -1,62 +1,28 @@
+"""
+Risk Predictor ML Service
+========================
+Pure ML logic - NO FastAPI imports, NO circular imports.
+Model is lazily loaded to prevent app startup crashes.
+Render-deployment safe.
+"""
 
 import joblib
 import numpy as np
 import os
-from typing import Dict, Any
-from app.services.ml.price_predictor import predict_price
-from app.services.advisor import Advisor
-from app.services.data_processor import DataProcessor
+import logging
+from typing import Dict, Any, Optional
 
-from fastapi import APIRouter
-
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(__file__)
 MODEL_PATH = os.path.join(BASE_DIR, "models", "risk_model.pkl")
 
-advisor = Advisor()
-# risk_predictor.py
-
-def predict_risk(symbol: str) -> dict:
-    # load trained model here
-    # example output
-    return {
-        "risk_score": 0.72,
-        "label": "HIGH",
-        "volatility": 0.031
-    }
-@router.post("/predict-ai")
-def predict_ai(payload: dict):
-    symbol = payload["symbol"]
-
-    # 1️⃣ Load historical stock data
-    df = DataProcessor.fetch_stock_data(symbol) # pyright: ignore[reportCallIssue]
-
-    # 2️⃣ Run trained ML models
-    price_result = predict_price(symbol)
-    risk_result = risk_predictor.predict_risk(symbol)
-
-    # 3️⃣ Run advisor (uses ML outputs)
-    advisor_result = advisor.suggest(
-        df=df,
-        ml_risk=risk_result,
-        ticker=symbol
-    )
-
-    # 4️⃣ Return everything to frontend
-    return {
-        "price": price_result,
-        "risk": risk_result,
-        "advisor": advisor_result
-    }
 
 class RiskPredictor:
     """
     AI Risk Predictor for stock market decisions.
-
-    Supports:
-    - Regression models (risk score 0–1)
-    - Classification models (LOW / MEDIUM / HIGH)
+    Pure ML class with no FastAPI dependencies.
+    Models are lazily loaded on first use.
     """
 
     REQUIRED_FEATURES = [
@@ -65,105 +31,194 @@ class RiskPredictor:
         "trend_strength",
         "volume_spike"
     ]
+
     def __init__(self):
-        self.model = None
+        """Initialize without loading model (lazy loading)"""
+        self.model: Optional[Any] = None
+        self.model_loaded = False
 
-    def load_model(self):
-        if self.model is None:
+    # =====================================================================
+    # Model Loading (Lazy)
+    # =====================================================================
+
+    def load_model(self) -> bool:
+        """
+        Lazily load the risk prediction model.
+        Returns True if successful, False otherwise.
+        """
+        if self.model_loaded:
+            return self.model is not None
+        
+        try:
             if not os.path.exists(MODEL_PATH):
-                raise RuntimeError(
-                    "Risk model not available. Train or provide model."
-                )
+                logger.warning(f"Risk model not found at {MODEL_PATH}. Using fallback.")
+                self.model_loaded = True
+                self.model = None
+                return False
+            
             self.model = joblib.load(MODEL_PATH)
+            self.model_loaded = True
+            logger.info("Risk model loaded successfully")
+            return True
+        
+        except Exception as e:
+            logger.error(f"Error loading risk model: {str(e)}")
+            self.model_loaded = True
+            self.model = None
+            return False
 
-    def predict(self, data):
-        self.load_model()
-        return self.model.predict(data)
+    # =====================================================================
+    # Feature Validation
+    # =====================================================================
 
-    # -----------------------------
-    # Feature validation
-    # -----------------------------
-    def _validate_features(self, features: Dict[str, Any]):
+    def _validate_features(self, features: Dict[str, Any]) -> None:
+        """
+        Validate that all required features are present.
+        
+        Raises:
+            ValueError: If required features are missing
+        """
         missing = [f for f in self.REQUIRED_FEATURES if f not in features]
         if missing:
             raise ValueError(f"Missing required features: {missing}")
+        
+        # Validate feature values are numeric
+        for key, value in features.items():
+            if key in self.REQUIRED_FEATURES:
+                try:
+                    float(value)
+                except (TypeError, ValueError):
+                    raise ValueError(f"Feature '{key}' must be numeric, got {type(value)}")
 
-    # -----------------------------
-    # Risk level mapping
-    # -----------------------------
+    # =====================================================================
+    # Risk Level Mapping
+    # =====================================================================
+
     @staticmethod
     def _risk_level_from_score(score: float) -> str:
+        """
+        Map continuous risk score to discrete risk level.
+        
+        Args:
+            score: Risk score between 0 and 1
+        
+        Returns:
+            Risk level: "LOW", "MEDIUM", or "HIGH"
+        """
         if score < 0.33:
             return "LOW"
         elif score < 0.66:
             return "MEDIUM"
         return "HIGH"
 
-    # -----------------------------
-    # Main prediction
-    # -----------------------------
+    # =====================================================================
+    # Main Prediction
+    # =====================================================================
+
     def predict_risk(self, features: Dict[str, float]) -> Dict[str, Any]:
         """
-        Input:
-        {
-            "volatility": 0.32,
-            "drawdown": -0.18,
-            "trend_strength": 0.65,
-            "volume_spike": 1.3
-        }
+        Predict risk from feature inputs.
+        
+        Args:
+            features: Dictionary with keys: volatility, drawdown, trend_strength, volume_spike
+                     All values should be floats between 0 and 1
+        
+        Returns:
+            Dictionary with risk_score, risk_level, and input_features
+        
+        Raises:
+            ValueError: If features are invalid
         """
-
+        # Validate input features
         self._validate_features(features)
-
-        X = np.array([[  
+        
+        # Prepare feature vector
+        X = np.array([[
             features["volatility"],
             features["drawdown"],
             features["trend_strength"],
             features["volume_spike"]
         ]])
+        
+        # Attempt to load model
+        model_available = self.load_model()
+        
+        # If no model available, use fallback
+        if not model_available or self.model is None:
+            logger.warning("Using fallback risk prediction (no model)")
+            return self._fallback_predict(features)
+        
+        try:
+            # Try regression prediction
+            if not hasattr(self.model, "predict_proba"):
+                score = float(self.model.predict(X)[0])
+                score = max(0.0, min(1.0, score))  # Clamp to [0, 1]
+                level = self._risk_level_from_score(score)
+            
+            # Try classification prediction
+            else:
+                probs = self.model.predict_proba(X)[0]
+                score = float(np.max(probs))
+                level = ["LOW", "MEDIUM", "HIGH"][int(np.argmax(probs))]
+            
+            return {
+                "risk_score": round(score, 4),
+                "risk_level": level,
+                "input_features": features,
+                "model_used": True
+            }
+        
+        except Exception as e:
+            logger.error(f"Error during model prediction: {str(e)}")
+            return self._fallback_predict(features)
 
-        # -----------------------------
-        # Case 1: Regression model
-        # -----------------------------
-        if hasattr(self.model, "predict") and not hasattr(self.model, "predict_proba"):
-            score = float(self.model.predict(X)[0])
-            score = max(0.0, min(1.0, score))  # clamp
-            level = self._risk_level_from_score(score)
+    # =====================================================================
+    # Fallback Prediction (No Model)
+    # =====================================================================
 
-        # -----------------------------
-        # Case 2: Classification model
-        # -----------------------------
-        else:
-            probs = self.model.predict_proba(X)[0]
-            score = float(np.max(probs))
-            level = ["LOW", "MEDIUM", "HIGH"][int(np.argmax(probs))]
-
-        explanation = self._generate_explanation(features, level)
-
+    def _fallback_predict(self, features: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Fallback prediction when model is not available.
+        Uses simple heuristic based on features.
+        
+        Args:
+            features: Feature dictionary
+        
+        Returns:
+            Risk prediction using fallback logic
+        """
+        # Simple weighted average of risk indicators
+        volatility = features.get("volatility", 0.5)
+        drawdown = features.get("drawdown", 0.5)
+        trend_strength = abs(features.get("trend_strength", 0.5) - 0.5) * 2  # Extreme trends = risk
+        volume_spike = features.get("volume_spike", 0.5)
+        
+        # Compute risk score as weighted average
+        score = (
+            volatility * 0.4 +
+            drawdown * 0.3 +
+            trend_strength * 0.2 +
+            volume_spike * 0.1
+        )
+        
+        score = max(0.0, min(1.0, score))
+        level = self._risk_level_from_score(score)
+        
         return {
             "risk_score": round(score, 4),
             "risk_level": level,
-            "risk_explanation": explanation,
-            "input_features": features
+            "input_features": features,
+            "model_used": False,
+            "fallback": True,
+            "note": "Using heuristic fallback (model not available)"
         }
 
-    # -----------------------------
-    # Explainability (VERY IMPORTANT)
-    # -----------------------------
-    def _generate_explanation(self, features: Dict[str, float], level: str) -> str:
-        reasons = []
+    # =====================================================================
+    # Backward Compatibility
+    # =====================================================================
 
-        if features["volatility"] > 0.4:
-            reasons.append("high market volatility")
-        if features["drawdown"] < -0.15:
-            reasons.append("significant recent drawdown")
-        if features["trend_strength"] < 0.4:
-            reasons.append("weak price trend")
-        if features["volume_spike"] > 1.5:
-            reasons.append("unusual trading volume")
-
-        if not reasons:
-            reasons.append("stable technical indicators")
-
-        return f"Risk classified as {level} due to " + ", ".join(reasons) + "."
-
+    def predict(self, features: Dict[str, float]) -> Dict[str, Any]:
+        """
+        Alias for predict_risk() for backward compatibility.
+        """
+        return self.predict_risk(features)
