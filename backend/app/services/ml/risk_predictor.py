@@ -25,13 +25,6 @@ def predict_risk(symbol: str) -> dict:
         "label": "HIGH",
         "volatility": 0.031
     }
-from app.services.ml.risk_predictor import RiskPredictor
-
-@router.post("/predict-risk")
-def predict_risk(payload: RiskInput):
-    predictor = RiskPredictor()
-    return predictor.predict(payload)
-
 @router.post("/predict-ai")
 def predict_ai(payload: dict):
     symbol = payload["symbol"]

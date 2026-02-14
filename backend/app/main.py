@@ -144,7 +144,6 @@ app.add_middleware(
     expose_headers=["X-RateLimit-Remaining", "X-RateLimit-Reset", "X-Process-Time"]
 )
 
-
 # Add GZip compression
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 

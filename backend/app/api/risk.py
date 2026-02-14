@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from app.services.ml.price_predictor import predict_price
-from app.services.ml.risk_predictor import predict_risk
+from app.services.ml.risk_predictor import predict_risk, RiskInput
 from app.services.advisor import Advisor
 from app.services.alpha_vintage import get_historical
 from app.services.ml.risk_vs_predict import (
@@ -62,6 +62,12 @@ def predict_ai(payload: dict):
     except Exception as e:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+from app.services.ml.risk_predictor import RiskPredictor
+
+@router.post("/predict-risk")
+def predict_risk(payload: RiskInput):
+    predictor = RiskPredictor()
+    return predictor.predict(payload)
 
 @router.get("/risk-vs-prediction")
 def risk_vs_prediction():
