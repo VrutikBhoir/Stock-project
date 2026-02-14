@@ -472,11 +472,6 @@ function PredictPage() {
       <div className="page-container">
         <main className="main-content">
           <div className="top-bar">
-            <div className="branding">
-              <h1>🤖 AI Stock Predictor</h1>
-              <p>Advanced forecasting with AI-powered investment recommendations</p>
-            </div>
-
             <div className="search-actions">
               <div className="search-box" ref={searchContainerRef}>
                 <span className="search-icon">🔍</span>

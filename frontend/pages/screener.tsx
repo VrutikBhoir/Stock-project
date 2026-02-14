@@ -63,7 +63,7 @@ export default function ScreenerPage() {
 
   return (
     <>
-      <Head><title>Stock Screener | LASTICA</title></Head>
+      <Head><title>Stock Screener | Stock Price Predictor</title></Head>
 
       {/* STOCK MARKET THEMED BACKGROUND */}
       <div className="bg">

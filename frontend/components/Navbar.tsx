@@ -108,41 +108,18 @@ export default function Navbar() {
           padding: '0 32px',
         }}>
 
-          {/* Logo - Left (LASTICA style from image) */}
+          {/* Logo - Left */}
           <Link href="/" style={{ textDecoration: 'none', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{
-                width: '40px',
-                height: '40px',
-                background: 'linear-gradient(135deg, #6366F1, #3B82F6)',
-                borderRadius: '6px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexDirection: 'column',
-                gap: '2px'
-              }}>
-                <div style={{ width: '16px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-                <div style={{ width: '16px', height: '3px', background: 'white', borderRadius: '2px' }}></div>
-              </div>
               <div>
                 <div style={{
-                  fontSize: '16px',
+                  fontSize: '22px',
                   fontWeight: '700',
-                  color: THEME.colors.textPrimary,
+                  color: '#00D9FF',
                   letterSpacing: '0.5px',
                   lineHeight: '1'
                 }}>
-                  LASTICA
-                </div>
-                <div style={{
-                  fontSize: '10px',
-                  color: THEME.colors.textSecondary,
-                  letterSpacing: '1px',
-                  fontWeight: '500',
-                  marginTop: '2px'
-                }}>
-                  LASTICA
+                  Stock Price Predictor
                 </div>
               </div>
             </div>
@@ -190,7 +167,6 @@ export default function Navbar() {
                     }
                   }}
                 >
-                  <span style={{ fontSize: '16px' }}>{link.icon}</span>
                   {link.name}
                 </Link>
               );
@@ -407,7 +383,6 @@ export default function Navbar() {
                   gap: '10px'
                 }}
               >
-                <span style={{ fontSize: '18px' }}>{link.icon}</span>
                 {link.name}
               </Link>
             ))}

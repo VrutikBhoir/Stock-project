@@ -222,16 +222,7 @@ export default function Dashboard() {
           </div>
         </header>
 
-        {/* AI PREDICTION DISCLAIMER */}
-        <div className="disclaimer-banner">
-          <span className="disclaimer-icon">ℹ️</span>
-          <p className="disclaimer-text">
-            This platform provides <strong>AI-based market predictions only</strong>. 
-            No trading or financial execution is performed. For research and educational purposes.
-          </p>
-        </div>
-
-        {/* PREDICTION METRICS GRID */}
+        {/* PREDICTION METRICS GRID */
         <div className="metrics-grid">
           {/* Prediction Confidence Index */}
           <div className="metric-card primary">
