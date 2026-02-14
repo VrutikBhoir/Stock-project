@@ -23,7 +23,7 @@ import math
 import secrets
 import time
 
-from fastapi import FastAPI, HTTPException, Request, Depends, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import FastAPI, HTTPException, Request, Depends, Query, Path, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
@@ -303,7 +303,7 @@ async def health_check():
 
 
 @app.get("/api/predict/{symbol}", dependencies=[Depends(rate_limiter_standard)])
-async def predict_endpoint(symbol: str = Query(..., min_length=1)):
+async def predict_endpoint(symbol: str = Path(..., min_length=1)):
     """Quick prediction endpoint for a stock symbol"""
     try:
         symbol = symbol.upper().strip()
