@@ -4,6 +4,7 @@ pydantic
 python-dotenv
 yfinance
 scikit-learn==1.6.1
+statsmodels
 joblib
 supabase
 email-validator
