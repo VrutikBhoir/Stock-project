@@ -214,7 +214,7 @@ export default function RiskVsPredictionPlot() {
                   data={[
                     {
                       x: sampledRisk,
-                      y: sampledActual.map((a, i) =>
+                      y: sampledActual.map((a: number, i: number) =>
                         sampledPredicted[i] == null ? null : Math.abs(a - sampledPredicted[i])
                       ),
                       type: "bar",
