@@ -14,7 +14,11 @@ export default function RiskVsPredictionPlot() {
 
   useEffect(() => {
     fetchRiskVsPrediction().then(res => {
-      setData(res.data);
+      setData(res || {});
+      setLoading(false);
+    }).catch(err => {
+      console.error("Error fetching risk vs prediction:", err);
+      setData({});
       setLoading(false);
     });
   }, []);

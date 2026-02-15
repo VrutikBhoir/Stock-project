@@ -140,20 +140,15 @@ def predict_price(symbol: str, steps: int = 10, confidence_level: float = 0.95):
     # 9️⃣ Calculate trend and volatility (and other indicators)
     indicators = _calculate_indicators(historical)
     
-    # Recalculate volatility correctly as Annualized Percentage
+    # Recalculate volatility correctly for confidence score
     returns = historical.pct_change().dropna()
-    volatility = returns.std() * np.sqrt(252) * 100 if len(returns) > 0 else 0
+    volatility = returns.std() * np.sqrt(252) * live_price 
     
     recent_change = ((live_price - historical.iloc[-10]) / historical.iloc[-10]) * 100 if len(historical) > 10 else 0
     
-    # Calculate Prediction Interval Width %
-    avg_fc = np.mean(final_fc)
-    avg_width = np.mean(upper_bound - lower_bound)
-    interval_width_pct = (avg_width / avg_fc) * 100 if avg_fc != 0 else 0
-
     # 🔟 Determine prediction confidence score
     confidence_score = _calculate_confidence_score(
-        interval_width_pct, 
+        forecast_std, 
         volatility, 
         accuracy_metrics
     )
@@ -252,27 +247,37 @@ def _calculate_indicators(historical_series):
         return {}
 
 
-def _calculate_confidence_score(interval_width_pct, volatility, accuracy_metrics):
+def _calculate_confidence_score(forecast_std, volatility, accuracy_metrics):
     """
     Calculate a confidence score (0-100) based on prediction uncertainty
+    
+    Args:
+        forecast_std: Standard deviation of forecasts
+        volatility: Historical volatility
+        accuracy_metrics: Dictionary of accuracy metrics
+    
+    Returns:
+        Confidence score as float between 0-100
     """
-    # Base score
+    # Base score starts at 100
     score = 100.0
     
-    # 1. Prediction Interval Penalty (Uncertainty)
-    # If interval width is 10% of price -> -20 score
-    score -= (interval_width_pct * 2.0)
+    # Penalize high forecast uncertainty
+    avg_uncertainty = np.mean(forecast_std)
+    uncertainty_penalty = min(avg_uncertainty * 5, 30)
+    score -= uncertainty_penalty
     
-    # 2. Volatility Penalty
-    # Normal vol is 15-30%. High is 50%+.
-    score -= (volatility * 0.5)
+    # Penalize high volatility
+    volatility_penalty = min(volatility * 2, 20)
+    score -= volatility_penalty
     
-    # 3. Accuracy Penalty
+    # Adjust based on backtest accuracy
     if accuracy_metrics and "mape" in accuracy_metrics:
-        # MAPE is percentage error. 5% error -> -5 score.
-        score -= accuracy_metrics["mape"]
+        mape = accuracy_metrics["mape"]
+        mape_penalty = min(mape / 2, 30)
+        score -= mape_penalty
     
-    return max(10.0, min(95.0, score))
+    return max(0.0, min(100.0, score))
 
 
 # ============================================================================
@@ -319,14 +324,12 @@ def analyze_investment(symbol: str, investment_horizon: str = "short_term"):
         momentum_score * 0.15
     )
     
-    # Calculate Expected Return %
-    expected_return_pct = ((predicted_t10 - live_price) / live_price) * 100
-
-    # Generate recommendation based on Expected Return
+    # Generate recommendation
     recommendation = _generate_recommendation(
-        expected_return_pct, 
+        overall_score, 
         investment_horizon,
-        volatility
+        risk_score,
+        trend_score
     )
     
     # Generate detailed reasoning
@@ -477,13 +480,29 @@ def _analyze_risk_factors(volatility, confidence_score, historical_data):
     """
     score = 100.0
     
-    # Volatility penalty (volatility is now percent)
-    # 20% vol -> -20 score
-    score -= volatility
+    # Volatility penalty (normalized)
+    avg_price = historical_data.mean()
+    volatility_ratio = (volatility / avg_price) * 100 if avg_price > 0 else 0
+    
+    if volatility_ratio > 5:
+        score -= 40  # Very high volatility
+    elif volatility_ratio > 3:
+        score -= 25  # High volatility
+    elif volatility_ratio > 1.5:
+        score -= 10  # Moderate volatility
     
     # Confidence penalty
-    if confidence_score < 50:
-        score -= 20
+    if confidence_score < 40:
+        score -= 30  # Low confidence
+    elif confidence_score < 60:
+        score -= 15  # Moderate confidence
+    
+    # Historical stability bonus
+    returns = historical_data.pct_change().dropna()
+    if len(returns) > 0:
+        stability = 1 / (returns.std() + 0.01)  # Inverse of std dev
+        stability_bonus = min(stability * 5, 20)
+        score += stability_bonus
     
     return max(0.0, min(100.0, score))
 
@@ -529,54 +548,43 @@ def _analyze_momentum(historical_data, indicators):
     return max(0.0, min(100.0, score))
 
 
-def _generate_recommendation(expected_return_pct, investment_horizon, volatility):
+def _generate_recommendation(overall_score, investment_horizon, risk_score, trend_score):
     """
-    Generate investment recommendation strictly based on Expected Return
+    Generate investment recommendation based on overall score
     """
-    # Thresholds (adjust based on volatility?)
-    # For now, standard thresholds
-    buy_threshold = 2.0       # > 2% gain
-    strong_buy_threshold = 5.0 # > 5% gain
-    sell_threshold = -2.0     # < -2% loss
-    strong_sell_threshold = -5.0 # < -5% loss
-    
-    # Adjust thresholds for horizon
-    if investment_horizon == "long_term":
-        buy_threshold = 5.0
-        strong_buy_threshold = 10.0
-    elif investment_horizon == "short_term":
-        buy_threshold = 1.0
-        strong_buy_threshold = 3.0
-
-    if expected_return_pct >= strong_buy_threshold:
+    if overall_score >= 75:
         action = "STRONG BUY"
-        description = f"Strong upside potential of {expected_return_pct:.1f}% projected."
-    elif expected_return_pct >= buy_threshold:
+        description = "Excellent investment opportunity with strong fundamentals and positive outlook"
+    elif overall_score >= 60:
         action = "BUY"
-        description = f"Positive outlook with {expected_return_pct:.1f}% projected gain."
-    elif expected_return_pct <= strong_sell_threshold:
-        action = "STRONG SELL"
-        description = f"Significant downside risk of {expected_return_pct:.1f}% projected."
-    elif expected_return_pct <= sell_threshold:
-        action = "SELL"
-        description = f"Negative outlook with {expected_return_pct:.1f}% projected loss."
-    else:
+        description = "Good investment opportunity with favorable indicators"
+    elif overall_score >= 50:
         action = "HOLD"
-        description = "Market neutral. No strong signal."
-    
-    # Add Volatility/Risk context
-    if volatility > 40:
-        description += " WARNING: High Volatility."
-        confidence = "low"
-    elif volatility > 20:
-        confidence = "medium"
+        description = "Neutral position - monitor for better entry points"
+    elif overall_score >= 35:
+        action = "SELL"
+        description = "Consider reducing position - weak indicators"
     else:
-        confidence = "high"
+        action = "STRONG SELL"
+        description = "Poor investment outlook - exit position recommended"
+    
+    # Adjust for investment horizon
+    horizon_note = ""
+    if investment_horizon == "long_term":
+        if risk_score > 60:
+            horizon_note = " Suitable for long-term buy-and-hold strategy."
+        else:
+            horizon_note = " High volatility may impact long-term returns."
+    elif investment_horizon == "short_term":
+        if trend_score > 60:
+            horizon_note = " Short-term momentum is favorable."
+        else:
+            horizon_note = " Limited short-term upside potential."
     
     return {
         "action": action,
-        "description": description,
-        "confidence": confidence
+        "description": description + horizon_note,
+        "confidence": "high" if overall_score > 70 or overall_score < 30 else "medium"
     }
 
 
@@ -756,19 +764,18 @@ def _generate_warnings(risk_score, volatility, confidence_score, trend):
 # ENHANCED API FUNCTIONS
 # ============================================================================
 
-def get_prediction_with_analysis(symbol: str, investment_horizon: str = "medium_term", steps: int = 10):
+def get_prediction_with_analysis(symbol: str, investment_horizon: str = "medium_term"):
     """
     Get complete prediction with AI investment analysis
     
     Args:
         symbol: Stock ticker symbol
         investment_horizon: Investment time horizon
-        steps: Number of forecast steps
     
     Returns:
         Combined prediction and investment analysis
     """
-    prediction = predict_price(symbol, steps=steps)
+    prediction = predict_price(symbol, steps=10)
     analysis = analyze_investment(symbol, investment_horizon)
     
     return {

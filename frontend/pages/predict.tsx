@@ -7,8 +7,7 @@ import React, {
 } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import Head from "next/head";
-import { useRouter } from "next/router";
+import Head from "next/head" ;
 import type { ApexOptions } from "apexcharts";
 import { POPULAR_STOCKS } from "../data/stocks";
 
@@ -130,11 +129,11 @@ interface CombinedResponse {
 }
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8001";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 
-function PredictPage() {
-  const router = useRouter();
+function PredictPage() 
+{
   const [clientTime, setClientTime] = useState<string | null>(null);
   const [data, setData] = useState<PredictionData | null>(null);
   const [analysis, setAnalysis] = useState<InvestmentAnalysis | null>(null);
@@ -173,18 +172,14 @@ function PredictPage() {
     try {
       setIsLoading(true);
       setError(null);
-
-      const response = await fetch(`${API_BASE_URL}/api/predict-ai`,
+      
+      const response = await fetch(
+        `${API_BASE_URL}/api/predict/${targetSymbol}?steps=${steps}`,
         {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            symbol: targetSymbol,
-            steps: steps,
-            investment_horizon: investmentHorizon
-          }),
         }
       );
 
@@ -194,10 +189,9 @@ function PredictPage() {
         throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result: any = await response.json();
-      // Map price field from response
-      setData(result.price || result.prediction);
-      setAnalysis(result.investment_analysis || result.advisor);
+      const result: CombinedResponse = await response.json();
+      setData(result.prediction);
+      setAnalysis(result.investment_analysis);
     } catch (err: any) {
       if (err.name === "AbortError" || err.name === "TimeoutError") {
         setError("Request timeout. Please try again.");
@@ -213,16 +207,8 @@ function PredictPage() {
   }, [symbol, steps, investmentHorizon]);
 
   useEffect(() => {
-    // Check if router is ready and has query parameters
-    if (router.isReady && router.query.symbol) {
-      const querySymbol = (router.query.symbol as string).toUpperCase();
-      setSymbol(querySymbol);
-    }
-  }, [router.isReady, router.query.symbol]);
-
-  useEffect(() => {
     fetchPrediction();
-  }, [fetchPrediction]);
+  }, []);
 
   const handleSymbolChange = (newSymbol: string) => {
     setSymbol(newSymbol.toUpperCase());
@@ -276,26 +262,6 @@ function PredictPage() {
   })).slice(-60) || [];
 
   const macdHist = indicators?.macd_hist.map((val, i) => ({
-    x: new Date(indicators.dates[i]).getTime(),
-    y: val
-  })).slice(-60) || [];
-
-  const sma20Data = indicators?.sma_20.map((val, i) => ({
-    x: new Date(indicators.dates[i]).getTime(),
-    y: val
-  })).slice(-60) || [];
-
-  const ema20Data = indicators?.ema_20.map((val, i) => ({
-    x: new Date(indicators.dates[i]).getTime(),
-    y: val
-  })).slice(-60) || [];
-
-  const bbUpperData = indicators?.bb_upper.map((val, i) => ({
-    x: new Date(indicators.dates[i]).getTime(),
-    y: val
-  })).slice(-60) || [];
-
-  const bbLowerData = indicators?.bb_lower.map((val, i) => ({
     x: new Date(indicators.dates[i]).getTime(),
     y: val
   })).slice(-60) || [];
@@ -411,39 +377,6 @@ function PredictPage() {
     { name: "Histogram", type: "bar", data: macdHist }
   ];
 
-  const smaEmaOptions: ApexOptions = {
-    chart: { type: "line", height: 150, background: "transparent", toolbar: { show: false } },
-    theme: { mode: "dark" },
-    stroke: { width: 2, curve: "smooth" },
-    colors: ["#22c55e", "#f97316"],
-    yaxis: { labels: { style: { colors: "#64748b" } } },
-    xaxis: { type: "datetime", labels: { show: false }, axisTicks: { show: false }, tooltip: { enabled: false } },
-    grid: { borderColor: "#1e293b", strokeDashArray: 4 },
-    legend: { show: true, position: "top", horizontalAlign: "left" }
-  };
-
-  const bbOptions: ApexOptions = {
-    chart: { type: "line", height: 150, background: "transparent", toolbar: { show: false } },
-    theme: { mode: "dark" },
-    stroke: { width: [2, 1, 1], curve: "smooth" },
-    colors: ["#3b82f6", "#94a3b8", "#94a3b8"],
-    yaxis: { labels: { style: { colors: "#64748b" } } },
-    xaxis: { type: "datetime", labels: { show: false }, axisTicks: { show: false }, tooltip: { enabled: false } },
-    grid: { borderColor: "#1e293b", strokeDashArray: 4 },
-    legend: { show: true, position: "top", horizontalAlign: "left" }
-  };
-
-  const smaEmaSeries = [
-    { name: "SMA 20", type: "line", data: sma20Data },
-    { name: "EMA 20", type: "line", data: ema20Data }
-  ];
-
-  const bbSeries = [
-    { name: "BB Upper", type: "line", data: bbUpperData },
-    { name: "BB Middle", type: "line", data: sma20Data },
-    { name: "BB Lower", type: "line", data: bbLowerData }
-  ];
-
   const priceChange = data ? (data.live_price - (data.historical[data.historical.length - 2]?.price || data.live_price)) : 0;
   const priceChangePercent = data ? (priceChange / (data.historical[data.historical.length - 2]?.price || 1)) * 100 : 0;
 
@@ -471,13 +404,16 @@ function PredictPage() {
   return (
     <>
       <Head>
-        <title>AI Stock Predictor | Investment Analysis Dashboard</title>
+        <title>Stock Price Prediction | Investment Analysis Dashboard</title>
       </Head>
 
       <div className="page-container">
         <main className="main-content">
           <div className="top-bar">
-            <div className="search-actions">
+            <div className="branding">
+            </div>
+
+            <div className="search-actions" style={{ justifyContent: 'center', width: '100%' }}>
               <div className="search-box" ref={searchContainerRef}>
                 <span className="search-icon">🔍</span>
                 <input
@@ -519,8 +455,8 @@ function PredictPage() {
 
               <div className="horizon-select">
                 <span className="label">Horizon</span>
-                <select
-                  value={investmentHorizon}
+                <select 
+                  value={investmentHorizon} 
                   onChange={(e) => setInvestmentHorizon(e.target.value)}
                 >
                   <option value="short_term">Short-term</option>
@@ -562,7 +498,7 @@ function PredictPage() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               className="recommendation-banner"
-              style={{
+              style={{ 
                 borderColor: getRecommendationColor(analysis.recommendation.action),
                 background: `linear-gradient(135deg, ${getRecommendationColor(analysis.recommendation.action)}15, transparent)`
               }}
@@ -579,7 +515,7 @@ function PredictPage() {
                   <h2 style={{ color: getRecommendationColor(analysis.recommendation.action) }}>
                     {analysis.recommendation.action}
                   </h2>
-                  <span className="rec-score">Confidence: {analysis.risk_assessment.confidence.toFixed(1)}%</span>
+                  <span className="rec-score">{analysis.overall_score.toFixed(1)}/100</span>
                 </div>
                 <p>{analysis.recommendation.description}</p>
               </div>
@@ -599,10 +535,10 @@ function PredictPage() {
                 icon="💰"
               />
               <MetricCard
-                title="Predicted Price"
-                value={`$${data.predicted_t10.toFixed(2)}`}
-                subtitle={<span className="sub-text">Target in {steps} days</span>}
-                icon="🔮"
+                title="Predicted Price (T+1)"
+                value={`$${data.predicted_t1.toFixed(2)}`}
+                subtitle={<span className="sub-text">Model Confidence: {data.confidence_score.toFixed(1)}%</span>}
+                icon="🎯"
               />
               <MetricCard
                 title="Risk Level"
@@ -620,17 +556,17 @@ function PredictPage() {
           )}
 
           <div className="tab-navigation">
-            <button
+            <button 
               className={`tab ${activeTab === 'charts' ? 'active' : ''}`}
               onClick={() => setActiveTab('charts')}
             >
               📈 Charts & Indicators
             </button>
-            <button
+            <button 
               className={`tab ${activeTab === 'analysis' ? 'active' : ''}`}
               onClick={() => setActiveTab('analysis')}
             >
-              🤖 AI Analysis
+              AI Analysis
             </button>
           </div>
 
@@ -673,20 +609,6 @@ function PredictPage() {
                       <h3>MACD (12, 26, 9) - Momentum</h3>
                     </div>
                     <Chart options={macdOptions} series={macdSeries} height={180} type="line" />
-                  </div>
-
-                  <div className="chart-card">
-                    <div className="chart-header small">
-                      <h3>SMA & EMA (20) - Trend Smoothing</h3>
-                    </div>
-                    <Chart options={smaEmaOptions} series={smaEmaSeries} height={180} type="line" />
-                  </div>
-
-                  <div className="chart-card">
-                    <div className="chart-header small">
-                      <h3>Bollinger Bands (20, 2) - Volatility</h3>
-                    </div>
-                    <Chart options={bbOptions} series={bbSeries} height={180} type="line" />
                   </div>
                 </>
               )}

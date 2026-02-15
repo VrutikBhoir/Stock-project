@@ -13,7 +13,7 @@ All ML and service logic is in backend/app/services/ml/ and backend/app/api/
 
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta
-from pathlib import Path as FilePath
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 import asyncio
 import hashlib
@@ -23,7 +23,7 @@ import math
 import secrets
 import time
 
-from fastapi import FastAPI, HTTPException, Request, Depends, Query, Path, WebSocket, WebSocketDisconnect, status
+from fastapi import FastAPI, HTTPException, Request, Depends, Query, Path as PathParam, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
@@ -65,7 +65,7 @@ from app.services.model_trainer import ModelTrainer
 from app.services.advisor import Advisor
 
 # ⚠️ ONLY import for direct use, NOT at module level in functions
-from app.services.ml.price_predictor import predict_price as ml_predict_price
+from app.services.ml.price_predictor import predict_price as ml_predict_price, analyze_investment
 from app.services.ml.event_impact_predict import predict_event
 
 # ============================================================================
@@ -82,7 +82,7 @@ logger = logging.getLogger(__name__)
 # CONFIGURATION
 # ============================================================================
 
-AUTH_FILE = FilePath(__file__).parent / "users.json"
+AUTH_FILE = Path(__file__).parent / "users.json"
 AUTH_FILE.touch(exist_ok=True)
 
 PREDICTION_CACHE = {}
@@ -175,6 +175,7 @@ app = FastAPI(
 # Risk API Router
 app.include_router(
     risk.router,
+    prefix="/api",
     tags=["Risk & Prediction"]
 )
 
@@ -303,18 +304,143 @@ async def health_check():
 
 
 @app.get("/api/predict/{symbol}", dependencies=[Depends(rate_limiter_standard)])
-async def predict_endpoint(symbol: str = Path(..., min_length=1)):
-    """Quick prediction endpoint for a stock symbol"""
+async def predict_endpoint(symbol: str = PathParam(min_length=1), steps: int = Query(10, ge=1, le=30)):
+    """Prediction endpoint for a stock symbol with investment analysis"""
     try:
         symbol = symbol.upper().strip()
-        result = ml_predict_price(symbol, steps=10)
+        # Get prediction
+        prediction = ml_predict_price(symbol, steps=steps, confidence_level=0.95)
+        # Get investment analysis
+        investment_analysis = analyze_investment(symbol, investment_horizon="medium_term")
+        
         return _clean_json({
-            "symbol": symbol,
-            "prediction": result,
-            "success": True
+            "prediction": prediction,
+            "investment_analysis": investment_analysis
         })
     except Exception as e:
         logger.error(f"Prediction error for {symbol}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/predict-ai", dependencies=[Depends(rate_limiter_standard)])
+async def predict_ai_endpoint(payload: dict = None):
+    """
+    AI Prediction endpoint for narrative and investment analysis
+    Accepts optional investor parameters for personalized analysis
+    """
+    try:
+        symbol = payload.get("symbol", "").upper().strip() if payload else ""
+        if not symbol:
+            raise HTTPException(status_code=400, detail="Symbol is required")
+        
+        # Get investment parameters
+        investor_type = payload.get("investor_type", "Balanced") if payload else "Balanced"
+        investment_horizon = payload.get("investment_horizon", "medium_term") if payload else "medium_term"
+        investment_goal = payload.get("investment_goal") if payload else None
+        
+        # Get prediction
+        prediction = ml_predict_price(symbol, steps=10)
+        
+        # Get investment analysis with specified horizon
+        investment_analysis = analyze_investment(symbol, investment_horizon=investment_horizon)
+        
+        # Create narrative structure from investment analysis
+        sentiment = "Bullish" if investment_analysis.get("recommendation", {}).get("action", "HOLD").startswith("BUY") else \
+                   "Bearish" if investment_analysis.get("recommendation", {}).get("action", "HOLD").startswith("SELL") else "Neutral"
+        
+        recommendation = investment_analysis.get("recommendation", {}).get("action", "HOLD")
+        confidence = investment_analysis.get("overall_score", 50)
+        
+        # Generate action guidance based on investor type and recommendation
+        action_guidance = ""
+        if investor_type == "Conservative":
+            action_guidance = f"For conservative investors, {recommendation} strategy with focus on capital preservation."
+        elif investor_type == "Aggressive":
+            action_guidance = f"For aggressive investors, consider {recommendation} for potential growth opportunities."
+        else:
+            action_guidance = f"For balanced investors, {recommendation} maintains portfolio equilibrium."
+        
+        # Generate insights
+        insights = [
+            f"Expected return: {investment_analysis.get('expected_performance', {}).get('short_term_return', 0):.1f}% short-term",
+            f"Risk level: {investment_analysis.get('risk_assessment', {}).get('level', 'MEDIUM')}",
+            f"Volatility: {investment_analysis.get('risk_assessment', {}).get('volatility', 0):.2f}",
+        ]
+        
+        narrative_response = {
+            "symbol": symbol,
+            "prediction": prediction,
+            "investment_analysis": investment_analysis,
+            "narrative": {
+                "sentiment": sentiment,
+                "conviction": "High" if confidence > 75 else "Medium" if confidence > 50 else "Low",
+                "confidence": confidence,
+                "signal_strength": investment_analysis.get("recommendation", {}).get("confidence", "medium"),
+                "sections": {
+                    "market_summary": investment_analysis.get("reasoning", ["Market analysis in progress"])[0],
+                    "why_this_outlook": investment_analysis.get("key_insights", ["Analysis based on available data"])[0],
+                    "key_factors": investment_analysis.get("key_insights", [])[:3],
+                    "disclaimer": "This analysis is for educational purposes only and not financial advice."
+                }
+            },
+            "investor_context": {
+                "investor_type": investor_type,
+                "recommendation": recommendation,
+                "action_guidance": action_guidance,
+                "insights": insights
+            },
+            "explainability": {
+                "how_to_use": {
+                    "title": "How to Use This Analysis",
+                    "steps": [
+                        "Review the market sentiment and conviction level",
+                        "Consider your investment horizon and goals",
+                        "Check the recommended action and reasoning",
+                        "Evaluate risk levels and potential returns"
+                    ],
+                    "important_notes": [
+                        "Past performance doesn't guarantee future results",
+                        "Always conduct your own due diligence",
+                        "Consider consulting with a financial advisor"
+                    ]
+                }
+            }
+        }
+        
+        return _clean_json(narrative_response)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"AI Prediction error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/predict-risk-custom", dependencies=[Depends(rate_limiter_standard)])
+async def predict_risk_custom_endpoint(payload: dict = None):
+    """
+    Event impact analysis endpoint
+    Analyzes the potential market impact of events on stock prices
+    """
+    try:
+        if not payload:
+            raise HTTPException(status_code=400, detail="Request body is required")
+        
+        symbol = payload.get("symbol", "").upper().strip()
+        event_name = payload.get("event_name", "").strip()
+        
+        if not symbol:
+            raise HTTPException(status_code=400, detail="Symbol is required")
+        if not event_name:
+            raise HTTPException(status_code=400, detail="Event name is required")
+        
+        # Use the predict_event function
+        result = predict_event(symbol, event_name)
+        
+        return _clean_json(result)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Event impact prediction error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -347,28 +473,69 @@ async def live_price(ticker: str):
 
 
 @app.get("/api/quotes", dependencies=[Depends(rate_limiter_standard)])
-def get_quotes(symbols: str = Query(..., description="Comma separated list of symbols")):
-    """Get real-time quotes for multiple symbols"""
+async def get_quotes(symbols: str = Query(..., description="Comma-separated list of stock symbols")):
+    """Get quotes for multiple stock symbols"""
     try:
+        import yfinance as yf
+        from app.services.alpha_vintage import get_live_price, normalize_symbol_for_yfinance
+        
         symbol_list = [s.strip().upper() for s in symbols.split(',') if s.strip()]
-        results = {}
         
-        for sym in symbol_list:
+        if not symbol_list:
+            raise HTTPException(status_code=400, detail="No symbols provided")
+        
+        quotes = {}
+        for ticker in symbol_list:
             try:
-                quote = data_processor.get_quote(sym)
-                if quote:
-                    results[sym] = quote
+                # Get live price first
+                price, timestamp = get_live_price(ticker)
+                
+                # Try to get historical data to calculate change
+                yf_symbol = normalize_symbol_for_yfinance(ticker)
+                yf_ticker = yf.Ticker(yf_symbol)
+                hist = yf_ticker.history(period="5d")
+                
+                change = 0
+                changePercent = 0
+                volume = 1000000
+                
+                if not hist.empty and len(hist) >= 2:
+                    # Get current price and previous close
+                    current_price = float(price)
+                    prev_close = float(hist.iloc[-2]["Close"])
+                    
+                    # Calculate change
+                    change = current_price - prev_close
+                    changePercent = (change / prev_close * 100) if prev_close != 0 else 0
+                    volume = int(hist.iloc[-1]["Volume"]) if "Volume" in hist else 1000000
+                
+                quotes[ticker] = {
+                    "ticker": ticker,
+                    "symbol": ticker,
+                    "price": float(price),
+                    "change": float(change),
+                    "changePercent": float(changePercent),
+                    "volume": int(volume),
+                    "timestamp": timestamp
+                }
+                logger.info(f"✅ Got quote for {ticker}: ${price} (change: {change:+.2f}, {changePercent:+.2f}%)")
             except Exception as e:
-                logger.warning(f"Failed to fetch quote for {sym}: {str(e)}")
+                logger.warning(f"Failed to get quote for {ticker}: {str(e)}")
+                # Use placeholder values
+                quotes[ticker] = {
+                    "ticker": ticker,
+                    "symbol": ticker,
+                    "price": 100.00,
+                    "change": 0,
+                    "changePercent": 0,
+                    "volume": 1000000,
+                    "timestamp": datetime.now().isoformat(),
+                    "error": str(e)
+                }
         
-        if not results:
-            raise HTTPException(status_code=404, detail=f"No quotes found for symbols: {symbols}")
-        
-        return results
-    except HTTPException:
-        raise
+        return quotes
     except Exception as e:
-        logger.error(f"Get quotes error: {str(e)}")
+        logger.error(f"Quotes error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

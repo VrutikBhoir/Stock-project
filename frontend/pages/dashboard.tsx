@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabase';
+import { API_BASE_URL } from '../lib/api';
 
 // Helper to format currency
 const formatCurrency = (val: number) => {
@@ -102,7 +103,6 @@ export default function Dashboard() {
         return;
       }
       const query = symbols.join(',');
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001";
       const url = `${API_BASE_URL}/api/quotes?symbols=${query}`;
       console.log("Fetching URL:", url);
 
@@ -305,30 +305,38 @@ export default function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {marketData.length > 0 ? marketData.map((stock: any) => (
-                    <tr key={stock.symbol}>
+                  {marketData.length > 0 ? marketData.map((stock: any) => {
+                    const change = Number(stock.change) || 0;
+                    const changePercent = Number(stock.changePercent) || 0;
+                    const price = Number(stock.price) || 0;
+                    const volume = Number(stock.volume) || 0;
+                    const symbol = stock.symbol || stock.ticker || "N/A";
+                    
+                    return (
+                    <tr key={symbol}>
                       <td className="symbol-cell">
                         <div className="symbol-wrapper">
-                          <span className="symbol-text">{stock.symbol}</span>
+                          <span className="symbol-text">{symbol}</span>
                         </div>
                       </td>
-                      <td className="price-cell">{formatCurrency(stock.price)}</td>
-                      <td className={`change-cell ${stock.change >= 0 ? 'positive' : 'negative'}`}>
-                        {stock.change > 0 ? '+' : ''}{stock.change.toFixed(2)}
+                      <td className="price-cell">{formatCurrency(price)}</td>
+                      <td className={`change-cell ${change >= 0 ? 'positive' : 'negative'}`}>
+                        {change > 0 ? '+' : ''}{change.toFixed(2)}
                       </td>
-                      <td className={`percent-cell ${stock.changePercent >= 0 ? 'positive' : 'negative'}`}>
+                      <td className={`percent-cell ${changePercent >= 0 ? 'positive' : 'negative'}`}>
                         <span className="percent-badge">
-                          {stock.changePercent > 0 ? '▲' : '▼'} {Math.abs(stock.changePercent).toFixed(2)}%
+                          {changePercent > 0 ? '▲' : '▼'} {Math.abs(changePercent).toFixed(2)}%
                         </span>
                       </td>
-                      <td className="volume-cell">{formatVolume(stock.volume)}</td>
+                      <td className="volume-cell">{formatVolume(volume)}</td>
                       <td>
-                        <button className="trade-btn" onClick={() => router.push(`/predict?symbol=${stock.symbol}`)}>
+                        <button className="trade-btn" onClick={() => router.push(`/predict?symbol=${symbol}`)}>
                           Analyze
                         </button>
                       </td>
                     </tr>
-                  )) : (
+                    );
+                  }) : (
                     <tr><td colSpan={6} style={{ textAlign: 'center', padding: '20px' }}>Loading market data...</td></tr>
                   )}
                 </tbody>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import type { Layout, Config } from 'plotly.js';
 function calculateBollingerBands(
   prices: number[],
   period = 20,
@@ -50,8 +49,8 @@ const Plot = dynamic(() => import('react-plotly.js'), {
 
 interface EnhancedPlotProps {
   data: any[];
-  layout?: Partial<Layout>;
-  config?: Partial<Config>;
+  layout?: Partial<Plotly.Layout>;
+  config?: Partial<Plotly.Config>;
   useResponsiveWidth?: boolean;
   darkMode?: boolean;
   className?: string;
@@ -80,7 +79,7 @@ export default function EnhancedPlot({
   }, []);
 
   // Dark theme configuration for Plotly
-  const darkThemeLayout: Partial<Layout> = {
+  const darkThemeLayout: Partial<Plotly.Layout> = {
     paper_bgcolor: '#111',
     plot_bgcolor: '#1a1a1a',
     font: {
@@ -108,7 +107,7 @@ export default function EnhancedPlot({
   };
 
   // Light theme configuration
-  const lightThemeLayout: Partial<Layout> = {
+  const lightThemeLayout: Partial<Plotly.Layout> = {
     paper_bgcolor: '#ffffff',
     plot_bgcolor: '#f9f9f9',
     font: {
@@ -130,7 +129,7 @@ export default function EnhancedPlot({
   };
 
   // Performance optimization configuration
-  const optimizedConfig: Partial<Config> = {
+  const optimizedConfig: Partial<Plotly.Config> = {
     responsive: useResponsiveWidth,
     displayModeBar: true,
     displaylogo: false,
@@ -146,7 +145,7 @@ export default function EnhancedPlot({
   };
 
   // Merge theme with user layout
-  const finalLayout: Partial<Layout> = {
+  const finalLayout: Partial<Plotly.Layout> = {
     ...(themeMode === 'dark' ? darkThemeLayout : lightThemeLayout),
     autosize: true,
     margin: { l: 50, r: 30, t: 50, b: 50 },
@@ -189,6 +188,7 @@ yaxis: {
         layout={finalLayout}
         config={optimizedConfig}
         style={{ width: '100%', height: '100%' }}
+        useResizeHandler={true}
       />
     </div>
   );

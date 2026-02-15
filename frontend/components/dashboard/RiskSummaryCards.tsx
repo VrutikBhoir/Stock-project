@@ -1,4 +1,16 @@
 export default function RiskSummaryCards({ stats, riskConfidence }: any) {
+  // Safely handle undefined or null stats
+  if (!stats) {
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
+        <div className="card"><h4>Avg Actual</h4><p>—</p></div>
+        <div className="card"><h4>Avg Predicted</h4><p>—</p></div>
+        <div className="card"><h4>Prediction Error</h4><p>—</p></div>
+        <div className="card"><h4>Risk Confidence</h4><p>—</p></div>
+      </div>
+    );
+  }
+
   const averageActual = Number(stats.average_actual) || 0;
   const averagePredicted = Number(stats.average_predicted) || 0;
   const meanAbsError = Number(stats.mean_absolute_error) || 0;
@@ -7,11 +19,10 @@ export default function RiskSummaryCards({ stats, riskConfidence }: any) {
     ? (meanAbsError / averageActual) * 100
     : 0;
 
-  const confidenceByRisk = riskConfidence || {
-    low: 40,
-    medium: 40,
-    high: 40
-  };
+  // Use real riskConfidence data, with calculated defaults only if completely missing
+  const low = riskConfidence?.low ?? 33.3;
+  const medium = riskConfidence?.medium ?? 33.3;
+  const high = riskConfidence?.high ?? 33.4;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px" }}>
@@ -25,13 +36,13 @@ export default function RiskSummaryCards({ stats, riskConfidence }: any) {
       </div>
       <div className="card">
         <h4 title="Average deviation between AI predictions and real market prices.">Prediction Error</h4>
-        <p>±{errorPct.toFixed(0)}%</p>
+        <p>±{errorPct.toFixed(1)}%</p>
       </div>
       <div className="card">
         <h4>Risk Confidence</h4>
-        <p>Low: {confidenceByRisk.low.toFixed(0)}%</p>
-        <p>Medium: {confidenceByRisk.medium.toFixed(0)}%</p>
-        <p>High: {confidenceByRisk.high.toFixed(0)}%</p>
+        <p>Low: {Number(low).toFixed(1)}%</p>
+        <p>Medium: {Number(medium).toFixed(1)}%</p>
+        <p>High: {Number(high).toFixed(1)}%</p>
       </div>
     </div>
   );

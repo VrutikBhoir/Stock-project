@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Head from "next/head";
+import { API_BASE_URL } from "../lib/api";
 
 interface EventImpactResult {
   ok: boolean;
@@ -34,7 +35,6 @@ export default function EventImpact() {
 
     setLoading(true);
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001";
       const res = await fetch(`${API_BASE_URL}/api/predict-risk-custom`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -29,10 +29,17 @@ export default function NarrativePage() {
     setError("");
 
     try {
+      // Convert short_term → Short-term for API compatibility
+      const horizonMap: {[key: string]: string} = {
+        "short_term": "Short-term",
+        "medium_term": "Medium-term",
+        "long_term": "Long-term"
+      };
+      
       const data = await generateNarrative({
         symbol: selectedStock,
         investor_type: investorType,
-        investment_horizon: timeHorizon,
+        investment_horizon: horizonMap[timeHorizon] || timeHorizon,
         investment_goal: investmentGoal || undefined,
       });
 
@@ -322,11 +329,11 @@ export default function NarrativePage() {
                   <div className="card-glow" />
                   <h3 className="narrative-title">
                     <span className="narrative-icon">👤</span>
-                    For {result.investor_context.investor_type} Investors
+                    For {result?.investor_context?.investor_type || 'All'} Investors
                   </h3>
                   <div className="investor-recommendation">
-                    <div className="recommendation-badge">{result.investor_context.recommendation}</div>
-                    {result.investor_context.action_guidance && (
+                    <div className="recommendation-badge">{result?.investor_context?.recommendation || 'N/A'}</div>
+                    {result?.investor_context?.action_guidance && (
                       <p className="narrative-text">{result.investor_context.action_guidance}</p>
                     )}
                   </div>
@@ -356,14 +363,14 @@ export default function NarrativePage() {
               <div className="card-glow" />
               <h3 className="section-title">💡 Recommended Actions & Insights</h3>
 
-              {result.investor_context.action_guidance && (
+              {result?.investor_context?.action_guidance && (
                 <div className="action-section">
                   <h4>Suggested Action:</h4>
                   <p>{result.investor_context.action_guidance}</p>
                 </div>
               )}
 
-              {result.investor_context.insights && result.investor_context.insights.length > 0 && (
+              {result?.investor_context?.insights && result.investor_context.insights.length > 0 && (
                 <div className="insights-section">
                   <h4>Key Insights:</h4>
                   <ul>
