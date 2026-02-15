@@ -346,6 +346,32 @@ async def live_price(ticker: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/quotes", dependencies=[Depends(rate_limiter_standard)])
+def get_quotes(symbols: str = Query(..., description="Comma separated list of symbols")):
+    """Get real-time quotes for multiple symbols"""
+    try:
+        symbol_list = [s.strip().upper() for s in symbols.split(',') if s.strip()]
+        results = {}
+        
+        for sym in symbol_list:
+            try:
+                quote = data_processor.get_quote(sym)
+                if quote:
+                    results[sym] = quote
+            except Exception as e:
+                logger.warning(f"Failed to fetch quote for {sym}: {str(e)}")
+        
+        if not results:
+            raise HTTPException(status_code=404, detail=f"No quotes found for symbols: {symbols}")
+        
+        return results
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get quotes error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/fetch-data", dependencies=[Depends(rate_limiter_standard)])
 async def fetch_data(request: FetchDataRequest):
     """Fetch historical stock data"""
