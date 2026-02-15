@@ -291,7 +291,6 @@ export default function RiskVsPredictionPlot() {
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
                   }}
                   style={{ width: '100%' }}
-                  useResizeHandler={true}
                 />
               </div>
             </section>
@@ -361,7 +360,6 @@ export default function RiskVsPredictionPlot() {
                     modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
                   }}
                   style={{ width: '100%' }}
-                  useResizeHandler={true}
                 />
               </div>
             </section>

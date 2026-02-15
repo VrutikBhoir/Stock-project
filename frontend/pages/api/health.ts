@@ -38,12 +38,17 @@ export default async function handler(
   // Try to resolve Supabase URL
   if (supabaseUrl) {
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const dnsCheck = await fetch(supabaseUrl, {
         method: 'HEAD',
-        timeout: 5000,
+        signal: controller.signal,
       }).catch((err) => {
         throw new Error(`Fetch failed: ${err.message}`);
       });
+
+      clearTimeout(timeoutId);
 
       response.checks.dns_test = {
         status: 'reachable',

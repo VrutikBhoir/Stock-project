@@ -44,7 +44,7 @@ export default function NarrativePage() {
     }
   };
 
-  const sentimentColor = {
+  const sentimentColor: { [key: string]: string } = {
     Bullish: "#22c55e",
     Bearish: "#ef4444",
     Neutral: "#f59e0b",

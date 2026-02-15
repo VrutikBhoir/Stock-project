@@ -190,6 +190,13 @@ export default function Dashboard() {
                       user?.email?.split('@')[0] || 
                       "Analyst";
 
+  const formattedDate = new Date().toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+
   return (
     <>
       {/* STOCK MARKET THEMED BACKGROUND */}
@@ -218,11 +225,11 @@ export default function Dashboard() {
             <h1 className="welcome-text">
               Welcome, <span className="highlight">{displayName}</span>
             </h1>
-            <p className="date-text">{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="date-text">{formattedDate}</p>
           </div>
         </header>
 
-        {/* PREDICTION METRICS GRID */
+        {/* PREDICTION METRICS GRID */}
         <div className="metrics-grid">
           {/* Prediction Confidence Index */}
           <div className="metric-card primary">
@@ -245,7 +252,7 @@ export default function Dashboard() {
               <span className="metric-label">Market Risk Index</span>
               <h2 className="metric-value">{predictionMetrics.marketRiskLevel}</h2>
             </div>
-            <div className={`metric-change ${predictionMetrics.marketRiskLevel === 'High' ? 'negative' : 'neutral'}`}>
+            <div className={predictionMetrics.marketRiskLevel === 'High' ? 'metric-change negative' : 'metric-change neutral'}>
               Current market volatility level
             </div>
           </div>
@@ -259,7 +266,7 @@ export default function Dashboard() {
               <h2 className="metric-value">{predictionMetrics.bullishSignals + predictionMetrics.bearishSignals + predictionMetrics.neutralSignals}</h2>
             </div>
             <div className="metric-mini-label">
-              🟢 {predictionMetrics.bullishSignals} | 🔴 {predictionMetrics.bearishSignals} | ⚪ {predictionMetrics.neutralSignals}
+              Bullish: {predictionMetrics.bullishSignals}, Bearish: {predictionMetrics.bearishSignals}, Neutral: {predictionMetrics.neutralSignals}
             </div>
           </div>
 
