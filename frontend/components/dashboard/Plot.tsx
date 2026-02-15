@@ -189,7 +189,6 @@ yaxis: {
         layout={finalLayout}
         config={optimizedConfig}
         style={{ width: '100%', height: '100%' }}
-        useResizeHandler={true}
       />
     </div>
   );
