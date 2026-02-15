@@ -294,7 +294,7 @@ export async function fetchPredictionVsReality() {
 export async function generateNarrative(payload: any) {
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8001";
   const res = await fetch(
-    `${baseUrl}/api/narrative/generate`,
+    `${baseUrl}/api/predict-ai`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -315,7 +315,12 @@ export async function generateNarrative(payload: any) {
     }
   }
 
-  return res.json();
+  const data = await res.json();
+  // Map advisor field to narrative for UI compatibility
+  return {
+    ...data,
+    narrative: data.advisor || data.narrative
+  };
 }
 
 export type ScreenerFilters = {

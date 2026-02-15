@@ -34,17 +34,24 @@ export default function EventImpact() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/event-impact", {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001";
+      const res = await fetch(`${API_BASE_URL}/api/predict-risk-custom`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          stock: stock.trim().toUpperCase(),
-          event: event.trim(),
+          symbol: stock.trim().toUpperCase(),
+          event_name: event.trim(),
+          confidence: 0.8,
+          risk_level: 0.5
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Server error: ${res.status}`);
+      }
+      
       const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error("Server error");
       setResult(data);
     } catch (e: any) {
       setError(e.message);

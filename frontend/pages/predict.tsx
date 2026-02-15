@@ -174,13 +174,17 @@ function PredictPage() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE_URL}/api/predict/${targetSymbol}?steps=${steps}`
-        ,
+      const response = await fetch(`${API_BASE_URL}/api/predict-ai`,
         {
-          method: "GET",
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
+          body: JSON.stringify({
+            symbol: targetSymbol,
+            steps: steps,
+            investment_horizon: investmentHorizon
+          }),
         }
       );
 
@@ -190,9 +194,10 @@ function PredictPage() {
         throw new Error(errorData.detail || `HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const result: CombinedResponse = await response.json();
-      setData(result.prediction);
-      setAnalysis(result.investment_analysis);
+      const result: any = await response.json();
+      // Map price field from response
+      setData(result.price || result.prediction);
+      setAnalysis(result.investment_analysis || result.advisor);
     } catch (err: any) {
       if (err.name === "AbortError" || err.name === "TimeoutError") {
         setError("Request timeout. Please try again.");
