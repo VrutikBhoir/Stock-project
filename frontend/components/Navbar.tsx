@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { supabase } from "../lib/supabase";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 
 // Dark theme matching the image
 const THEME = {
@@ -39,7 +40,7 @@ export default function Navbar() {
     document.addEventListener('mousedown', handleClickOutside);
 
     // Auth Listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         const { data } = await supabase
