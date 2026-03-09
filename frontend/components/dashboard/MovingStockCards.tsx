@@ -197,10 +197,13 @@ function MiniCandles({ candles }: { candles: Candle[] }) {
 }
 
 export default function MovingStockCards({
-  data: _data
+  data: _data,
+  signals
 }: {
   data?: unknown[];
+  signals?: Record<string, any>;
 }) {
+  const router = useRouter()
   const symbols = useMemo(() => STOCKS.map((stock) => stock.symbol), []);
   const stockBySymbol = useMemo(() => {
     return new Map(STOCKS.map((stock) => [stock.symbol, stock]));
@@ -358,7 +361,6 @@ export default function MovingStockCards({
             const news = item.quote?.news;
             const headline = news?.headline;
             const sentiment = news?.sentiment;
-            const router = useRouter()
             const impact = news?.impact;
             const summary = news?.summary;
             console.log('USING QUOTE FOR', item.stock.symbol, item.quote);
