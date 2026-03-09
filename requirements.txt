@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+pydantic
+python-dotenv
+pytz
+yfinance
+scikit-learn==1.6.1
+statsmodels
+joblib
+supabase
+email-validator
+statsmodels
+lightgbm
+tensorflow
+lightgbm

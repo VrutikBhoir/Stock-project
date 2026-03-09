@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lightweight Charts Test</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; background: #0b1220; color: white; }
+        #chart { width: 100%; height: 420px; background: #1a1f2e; }
+    </style>
+</head>
+<body>
+    <h1>TradingView Lightweight Charts Test</h1>
+    <div id="chart"></div>
+    
+    <script>
+        console.log("🧪 Starting chart test...");
+        
+        const chartContainer = document.getElementById('chart');
+        const chart = LightweightCharts.createChart(chartContainer, {
+            width: chartContainer.clientWidth,
+            height: 420,
+            layout: {
+                background: { color: '#0b1220' },
+                textColor: '#d1d4dc',
+            },
+            grid: {
+                vertLines: { color: '#1f2937' },
+                horzLines: { color: '#1f2937' },
+            },
+            timeScale: { timeVisible: true },
+        });
+        
+        console.log("✅ Chart created:", chart);
+
+        const candlestickSeries = chart.addCandlestickSeries({
+            upColor: '#22c55e',
+            downColor: '#ef4444',
+            wickUpColor: '#22c55e',
+            wickDownColor: '#ef4444',
+            borderUpColor: '#22c55e',
+            borderDownColor: '#ef4444',
+        });
+        
+        console.log("✅ Series created:", candlestickSeries);
+
+        // Sample data
+        const data = [
+            { time: 1708695000, open: 180, high: 185, low: 179, close: 183 },
+            { time: 1708698600, open: 183, high: 187, low: 182, close: 186 },
+            { time: 1708702200, open: 186, high: 190, low: 185, close: 189 },
+            { time: 1708705800, open: 189, high: 192, low: 188, close: 191 },
+            { time: 1708709400, open: 191, high: 194, low: 190, close: 192 },
+        ];
+        
+        candlestickSeries.setData(data);
+        chart.timeScale().fitContent();
+        
+        console.log("✅ Data set successfully - you should see 5 green candles!");
+    </script>
+</body>
+</html>

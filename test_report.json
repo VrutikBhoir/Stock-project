@@ -1,0 +1,91 @@
+{
+  "summary": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "success_rate": 87.5
+  },
+  "results": [
+    {
+      "name": "Backend Structure",
+      "success": true,
+      "message": "All 9 backend files exist",
+      "execution_time": 0.0,
+      "details": {
+        "checked_files": 9
+      }
+    },
+    {
+      "name": "Frontend Structure",
+      "success": true,
+      "message": "All 6 frontend files exist",
+      "execution_time": 0.01060628890991211,
+      "details": {
+        "checked_files": 6
+      }
+    },
+    {
+      "name": "Backend Imports",
+      "success": true,
+      "message": "All core dependencies imported successfully",
+      "execution_time": 3.9758894443511963,
+      "details": {
+        "imports": 1
+      }
+    },
+    {
+      "name": "ML Models",
+      "success": false,
+      "message": "Missing key: prediction_accuracy",
+      "execution_time": 0.7110333442687988,
+      "details": {}
+    },
+    {
+      "name": "Data Processing",
+      "success": true,
+      "message": "Data processing successful with 5 data points",
+      "execution_time": 5.003864049911499,
+      "details": {
+        "data_points": 5,
+        "indicators": [
+          "sma_5",
+          "volatility"
+        ]
+      }
+    },
+    {
+      "name": "API Structure",
+      "success": true,
+      "message": "API structure validated successfully",
+      "execution_time": 0.21268820762634277,
+      "details": {
+        "api_modules": [
+          "narrative",
+          "risk",
+          "portfolio"
+        ]
+      }
+    },
+    {
+      "name": "Configuration",
+      "success": true,
+      "message": "Configuration files checked",
+      "execution_time": 0.0,
+      "details": {
+        "config_checks": [
+          "\u2705 Backend .env exists",
+          "\u2705 Frontend config exists"
+        ]
+      }
+    },
+    {
+      "name": "Frontend Compilation",
+      "success": true,
+      "message": "Frontend dependencies not installed, skipping compilation test",
+      "execution_time": 0.0,
+      "details": {
+        "skipped": true
+      }
+    }
+  ]
+}
