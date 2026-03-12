@@ -12,4 +12,3 @@ email-validator
 statsmodels
 lightgbm
 tensorflow
-lightgbm

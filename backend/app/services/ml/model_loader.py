@@ -1,5 +1,6 @@
 import os
 import time
+from urllib import response
 import joblib
 import requests
 import os
@@ -8,11 +9,15 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.path.join(BASE_DIR, "models")
 MODEL_PATH = os.path.join(MODEL_DIR, "all_forecasts.pkl")
 
-MODEL_URL = "https://api.onedrive.com/v1.0/shares/u!aHR0cHM6Ly8xZHJ2Lm1zL3UvYy82NUM3QjA2OEQ3OTc0RTk3L0lRQmlNQXlhTy1TUVRaN3VjX0VfY2ZJVUFWdGdLVk1oblJpSnpHUXR2a2hFTXFJP2Rvd25sb2FkPTE/root/content"
-
+MODEL_URL = "https://1drv.ms/u/c/65C7B068D7974E97/IQBiMAuaO-SQTZ7uc_E_cfIUAVgtkVMhnRiJzGQtvkhEMqI?e=4xZHPA&download=1"
 def ensure_model_file(path: str):
     if not os.path.exists(path):
-        raise FileNotFoundError(f"Model file not found: {path}")
+        print("[INFO] Model missing. Downloading...")
+        download_model()
+
+    if not os.path.exists(path):
+        raise RuntimeError(f"Model still missing after download: {path}")
+
     return path
 
 def download_model():
@@ -25,10 +30,9 @@ def download_model():
 
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    response = requests.get(MODEL_URL, stream=True)
-
+    response = requests.get(MODEL_URL, stream=True, allow_redirects=True)
     if response.status_code != 200:
-        raise RuntimeError("Failed to download model")
+      raise RuntimeError(f"Failed to download model: {response.status_code}")
 
     with open(MODEL_PATH, "wb") as f:
         for chunk in response.iter_content(1024 * 1024):
@@ -45,7 +49,7 @@ def load_all_models():
 
     start = time.time()
 
-    download_model()
+    ensure_model_file(MODEL_PATH)
 
     print("[INFO] Loading models...")
 

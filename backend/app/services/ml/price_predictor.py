@@ -56,7 +56,7 @@ def predict_price(symbol: str, steps: int = 10, confidence_level: float = 0.95):
 
     # 3️⃣ Load trained model metadata (fail fast if missing)
     try:
-        model_path = ensure_model_file()
+        model_path = ensure_model_file(path=MODEL_PATH)
         bundle = joblib.load(model_path)
     except (FileNotFoundError, EOFError, pickle.UnpicklingError, Exception) as e:
         raise RuntimeError(f"Model file missing or invalid: {str(e)}") from e
