@@ -12,7 +12,7 @@ def test_api():
     
     # Test health endpoint
     try:
-        health_response = requests.get("http://localhost:8001/api/market-reasoning/health")
+        health_response = requests.get("http://stocklens-production-89a6.up.railway.app//api/market-reasoning/health")
         print(f"✅ Health Check: {health_response.status_code}")
         print(f"   Response: {health_response.json()}")
     except Exception as e:
@@ -42,7 +42,7 @@ def test_api():
     
     try:
         response = requests.post(
-            "http://localhost:8001/api/market-reasoning/explain",
+            "http://stocklens-production-89a6.up.railway.app//api/market-reasoning/explain",
             json=test_data,
             headers={"Content-Type": "application/json"}
         )

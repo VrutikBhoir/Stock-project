@@ -134,7 +134,7 @@ interface CombinedResponse {
 }
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8001";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://stocklens-production-89a6.up.railway.app/";
 
 
 function PredictPage() {

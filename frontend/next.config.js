@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
-    const target = process.env.BACKEND_URL || 'http://localhost:8001';
+    const target = process.env.BACKEND_URL || 'http://stocklens-production-89a6.up.railway.app/';
     return [
       { source: '/api/:path*', destination: `${target}/api/:path*` },
     ];

@@ -78,9 +78,9 @@ def main():
         )
 
         print("=" * 50)
-        print("Backend : http://localhost:8001")
+        print("Backend : http://stocklens-production-89a6.up.railway.app/")
         print("Frontend: http://localhost:3000")
-        print("Docs    : http://localhost:8001/api/docs")
+        print("Docs    : http://stocklens-production-89a6.up.railway.app//api/docs")
         print("=" * 50)
         print("Press Ctrl+C to stop both servers")
 

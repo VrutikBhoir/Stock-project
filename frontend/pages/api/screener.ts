@@ -8,7 +8,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
   try {
     const { tickers, filters } = req.body || {};
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8001";
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://stocklens-production-89a6.up.railway.app/";
     const { data } = await axios.post(`${API_BASE_URL}/screener`, { tickers, filters }, { timeout: 120000 });
     res.status(200).json(data);
   } catch (e: any) {
