@@ -16,7 +16,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log(`[API] Proxying predict request for ${symbol} to backend...`);
 
     const { data } = await axios.get(
-      `https://stocklens-production-89a6.up.railway.app//api/predict/${symbol}`,
+      `https://stocklens-production-89a6.up.railway.app/api/predict/${symbol}`,
       {
         params: {
           steps: parseInt(steps as string) || 10,

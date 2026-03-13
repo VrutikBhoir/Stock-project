@@ -15,7 +15,7 @@ from pathlib import Path
 class IntegrationTestRunner:
     def __init__(self):
         self.frontend_url = "http://localhost:3000"
-        self.backend_url = "http://stocklens-production-89a6.up.railway.app/"
+        self.backend_url = "https://stocklens-production-89a6.up.railway.app"
         self.results = []
         
     async def test_health_endpoints(self):

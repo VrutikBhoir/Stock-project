@@ -144,8 +144,8 @@ export function testNoRealTradingAPICalls() {
     '/api/trade/buy',
     '/api/trade/sell',
     '/api/trade/close',
-    'https://stocklens-production-89a6.up.railway.app//api/trade/buy',
-    'https://stocklens-production-89a6.up.railway.app//api/trade/sell'
+    'https://stocklens-production-89a6.up.railway.app/api/trade/buy',
+    'https://stocklens-production-89a6.up.railway.app/api/trade/sell'
   ];
   
   console.log('✅ Allowed endpoints:', allowedEndpoints);

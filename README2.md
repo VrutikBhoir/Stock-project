@@ -131,7 +131,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 Test with curl:
 ```bash
-curl -X POST "http://stocklens-production-89a6.up.railway.app//fetch-data" \
+curl -X POST "https://stocklens-production-89a6.up.railway.app/fetch-data" \
   -H "Content-Type: application/json" \
   -d '{"ticker":"AAPL","start_date":"2024-01-01","end_date":"2024-12-31"}'
 ```
@@ -441,7 +441,7 @@ Step 2: Convert format (frontend to API)
 - long_term -> Long-term
 
 Step 3: Send to backend
-POST http://stocklens-production-89a6.up.railway.app//api/narrative/generate
+POST https://stocklens-production-89a6.up.railway.app/api/narrative/generate
 
 Step 4: Backend processing
 - Fetch market data (yfinance)
@@ -609,7 +609,7 @@ Frontend request -> POST /api/narrative/generate -> narrative.py (validation) ->
 
 - python backend/verify_narrative_contracts.py
 - python backend/test_narrative_gen.py
-- curl POST http://stocklens-production-89a6.up.railway.app//api/narrative/generate
+- curl POST https://stocklens-production-89a6.up.railway.app/api/narrative/generate
 
 ### Success Criteria
 
@@ -627,7 +627,7 @@ uvicorn app.main:app --port 8001 --reload
 
 2. Make a request:
 ```bash
-curl -X POST http://stocklens-production-89a6.up.railway.app//api/narrative/generate \
+curl -X POST https://stocklens-production-89a6.up.railway.app/api/narrative/generate \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "AAPL",
@@ -899,7 +899,7 @@ uvicorn app.main:app --reload --port 8001
 
 3. Test API:
 ```bash
-curl -X POST http://stocklens-production-89a6.up.railway.app//api/narrative/generate \
+curl -X POST https://stocklens-production-89a6.up.railway.app/api/narrative/generate \
   -H "Content-Type: application/json" \
   -d '{
     "symbol": "AAPL",

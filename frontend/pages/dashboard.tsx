@@ -29,7 +29,7 @@ export default function Dashboard() {
   const fetchDashboardMetrics = async () => {
     try {
       const API_BASE_URL =
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://stocklens-production-89a6.up.railway.app/";
+        process.env.NEXT_PUBLIC_API_BASE_URL || "https://stocklens-production-89a6.up.railway.app";
 
       const res = await fetch(`${API_BASE_URL}/api/dashboard-metrics`);
       const data = await res.json();
@@ -113,7 +113,7 @@ export default function Dashboard() {
       if (symbols.length === 0) return;
       
       const query = symbols.join(',');
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://stocklens-production-89a6.up.railway.app/";
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://stocklens-production-89a6.up.railway.app";
       const url = `${API_BASE_URL}/api/quotes?symbols=${query}`;
 
       const res = await fetch(url);

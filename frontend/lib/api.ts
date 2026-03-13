@@ -6,7 +6,8 @@ import axios from 'axios';
 // ============================================================================
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://stocklens-production-89a6.up.railway.app/";
+process.env.NEXT_PUBLIC_API_BASE_URL ||
+"https://stocklens-production-89a6.up.railway.app";
 
 // 1. ADD THIS: Define the response type for Finnhub so TypeScript is happy
 type FinnhubQuote = {
@@ -166,7 +167,7 @@ export async function fetchAI(symbol: string) {
 }
 
 export async function fetchRiskVsPrediction() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://stocklens-production-89a6.up.railway.app/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://stocklens-production-89a6.up.railway.app";
   try {
     const res = await fetch(`${baseUrl}/api/risk-vs-prediction`);
     
@@ -376,13 +377,13 @@ export async function getFullPrediction(features: any) {
   return await res.json();
 }
 export async function fetchPredictionVsReality() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://stocklens-production-89a6.up.railway.app/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://stocklens-production-89a6.up.railway.app";
   const res = await fetch(`${baseUrl}/prediction-vs-reality`);
   return res.json();
 }
 
 export async function generateNarrative(payload: any) {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://stocklens-production-89a6.up.railway.app/";
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://stocklens-production-89a6.up.railway.app";
   
   // Transform frontend payload to match backend API contract
   const backendPayload = {

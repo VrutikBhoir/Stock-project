@@ -11,7 +11,7 @@ import requests
 import json
 import sys
 
-BASE_URL = "http://stocklens-production-89a6.up.railway.app/"
+BASE_URL = "https://stocklens-production-89a6.up.railway.app"
 NARRATIVE_ENDPOINT = f"{BASE_URL}/api/narrative/generate"
 
 # Test cases

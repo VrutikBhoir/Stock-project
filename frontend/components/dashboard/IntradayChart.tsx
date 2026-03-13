@@ -74,7 +74,7 @@ const IntradayChart: React.FC = () => {
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://stocklens-production-89a6.up.railway.app/';
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://stocklens-production-89a6.up.railway.app';
 
   const POLL_RATE_OPEN = 60000;
   const MARKET_RECHECK_MS = 300000;

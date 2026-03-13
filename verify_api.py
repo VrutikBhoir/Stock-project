@@ -2,7 +2,7 @@ import urllib.request
 import json
 
 try:
-    with urllib.request.urlopen("http://stocklens-production-89a6.up.railway.app//api/predict/AAPL") as response:
+    with urllib.request.urlopen("https://stocklens-production-89a6.up.railway.app/api/predict/AAPL") as response:
         data = json.loads(response.read().decode())
     
     print(json.dumps({
