@@ -28,7 +28,7 @@ export async function getLivePrice(ticker: string) {
   // Option A: Direct Frontend Call (Real Data)
   // WARNING: In a production app, you should not expose API keys in the frontend.
   // For a portfolio project or local dashboard, this is acceptable.
-  const API_KEY = '4PV82V2URSCMN9OM'; // <--- PASTE YOUR KEY HERE
+  const API_KEY = process.env.FINNHUB_API_KEY;// <--- PASTE YOUR KEY HERE
   
   try {
     // We use standard axios here, not the 'api' instance, to avoid localhost base URL
@@ -368,17 +368,25 @@ export async function getAdvice(payload: {
 // --- Auth ---
 
 export async function getFullPrediction(features: any) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/predict/full`, {
+  const res = await fetch(`${API_BASE_URL}/api/predict/full`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(features),
   });
 
-  return await res.json();
+  if (!res.ok) {
+    throw new Error(`Prediction failed: ${res.status}`);
+  }
+
+  return res.json();
 }
 export async function fetchPredictionVsReality() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://stocklens-production-89a6.up.railway.app";
-  const res = await fetch(`${baseUrl}/prediction-vs-reality`);
+  const res = await fetch(`${API_BASE_URL}/api/prediction-vs-reality`);
+
+  if (!res.ok) {
+    throw new Error(`Prediction vs Reality API failed: ${res.status}`);
+  }
+
   return res.json();
 }
 
